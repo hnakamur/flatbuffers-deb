@@ -1,4 +1,7 @@
 #!/usr/bin/make -f
 
+# SOURCE_DATE_EPOCH set by dh
+export DEB_CPPFLAGS_MAINT_APPEND = -Wno-error=date-time
+
 %:
 	dh $@
