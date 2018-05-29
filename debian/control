@@ -1,0 +1,18 @@
+Source: flatbuffers
+Section: devel
+Priority: optional
+Maintainer: Maximiliano Curia <maxy@debian.org>
+Build-Depends: cmake (>= 2.8), debhelper (>= 11)
+Standards-Version: 4.1.4
+Homepage: http://google.github.io/flatbuffers/
+Vcs-Browser: https://salsa.debian.org/debian/flatbuffers
+Vcs-Git: https://salsa.debian.org/debian/flatbuffers.git
+
+Package: flatbuffers
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: efficient cross platform serialization library
+ FlatBuffers is an efficient cross platform serialization library for C++, C#,
+ C, Go, Java, JavaScript, TypeScript, PHP, and Python. It was originally
+ created at Google for game development and other performance-critical
+ applications.
