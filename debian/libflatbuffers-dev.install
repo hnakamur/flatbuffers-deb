@@ -1,0 +1,4 @@
+usr/include/flatbuffers/
+usr/lib/*/cmake/flatbuffers/Flatbuffers*
+usr/lib/*/libflatbuffers.a
+usr/lib/*/libflatbuffers.so
