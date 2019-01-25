@@ -44,6 +44,25 @@ struct TypeAliasesT;
 
 }  // namespace Example
 
+bool operator==(const InParentNamespaceT &lhs, const InParentNamespaceT &rhs);
+namespace Example2 {
+
+bool operator==(const MonsterT &lhs, const MonsterT &rhs);
+}  // namespace Example2
+
+namespace Example {
+
+bool operator==(const Test &lhs, const Test &rhs);
+bool operator==(const TestSimpleTableWithEnumT &lhs, const TestSimpleTableWithEnumT &rhs);
+bool operator==(const Vec3 &lhs, const Vec3 &rhs);
+bool operator==(const Ability &lhs, const Ability &rhs);
+bool operator==(const StatT &lhs, const StatT &rhs);
+bool operator==(const ReferrableT &lhs, const ReferrableT &rhs);
+bool operator==(const MonsterT &lhs, const MonsterT &rhs);
+bool operator==(const TypeAliasesT &lhs, const TypeAliasesT &rhs);
+
+}  // namespace Example
+
 inline const flatbuffers::TypeTable *InParentNamespaceTypeTable();
 
 namespace Example2 {
@@ -215,10 +234,34 @@ struct AnyUnion {
   }
 };
 
+
+inline bool operator==(const AnyUnion &lhs, const AnyUnion &rhs) {
+  if (lhs.type != rhs.type) return false;
+  switch (lhs.type) {
+    case Any_NONE: {
+      return true;
+    }
+    case Any_Monster: {
+      return *(reinterpret_cast<const MonsterT *>(lhs.value)) ==
+             *(reinterpret_cast<const MonsterT *>(rhs.value));
+    }
+    case Any_TestSimpleTableWithEnum: {
+      return *(reinterpret_cast<const TestSimpleTableWithEnumT *>(lhs.value)) ==
+             *(reinterpret_cast<const TestSimpleTableWithEnumT *>(rhs.value));
+    }
+    case Any_MyGame_Example2_Monster: {
+      return *(reinterpret_cast<const MyGame::Example2::MonsterT *>(lhs.value)) ==
+             *(reinterpret_cast<const MyGame::Example2::MonsterT *>(rhs.value));
+    }
+    default: {
+      return false;
+    }
+  }
+}
 bool VerifyAny(flatbuffers::Verifier &verifier, const void *obj, Any type);
 bool VerifyAnyVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
 
-MANUALLY_ALIGNED_STRUCT(2) Test FLATBUFFERS_FINAL_CLASS {
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(2) Test FLATBUFFERS_FINAL_CLASS {
  private:
   int16_t a_;
   int8_t b_;
@@ -247,9 +290,15 @@ MANUALLY_ALIGNED_STRUCT(2) Test FLATBUFFERS_FINAL_CLASS {
     flatbuffers::WriteScalar(&b_, _b);
   }
 };
-STRUCT_END(Test, 4);
+FLATBUFFERS_STRUCT_END(Test, 4);
 
-MANUALLY_ALIGNED_STRUCT(16) Vec3 FLATBUFFERS_FINAL_CLASS {
+inline bool operator==(const Test &lhs, const Test &rhs) {
+  return
+      (lhs.a() == rhs.a()) &&
+      (lhs.b() == rhs.b());
+}
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(16) Vec3 FLATBUFFERS_FINAL_CLASS {
  private:
   float x_;
   float y_;
@@ -316,9 +365,19 @@ MANUALLY_ALIGNED_STRUCT(16) Vec3 FLATBUFFERS_FINAL_CLASS {
     return test3_;
   }
 };
-STRUCT_END(Vec3, 32);
+FLATBUFFERS_STRUCT_END(Vec3, 32);
 
-MANUALLY_ALIGNED_STRUCT(4) Ability FLATBUFFERS_FINAL_CLASS {
+inline bool operator==(const Vec3 &lhs, const Vec3 &rhs) {
+  return
+      (lhs.x() == rhs.x()) &&
+      (lhs.y() == rhs.y()) &&
+      (lhs.z() == rhs.z()) &&
+      (lhs.test1() == rhs.test1()) &&
+      (lhs.test2() == rhs.test2()) &&
+      (lhs.test3() == rhs.test3());
+}
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Ability FLATBUFFERS_FINAL_CLASS {
  private:
   uint32_t id_;
   uint32_t distance_;
@@ -341,8 +400,7 @@ MANUALLY_ALIGNED_STRUCT(4) Ability FLATBUFFERS_FINAL_CLASS {
     return id() < o->id();
   }
   int KeyCompareWithValue(uint32_t val) const {
-    const auto key = id();
-    return static_cast<int>(key > val) - static_cast<int>(key < val);
+    return static_cast<int>(id() > val) - static_cast<int>(id() < val);
   }
   uint32_t distance() const {
     return flatbuffers::EndianScalar(distance_);
@@ -351,7 +409,13 @@ MANUALLY_ALIGNED_STRUCT(4) Ability FLATBUFFERS_FINAL_CLASS {
     flatbuffers::WriteScalar(&distance_, _distance);
   }
 };
-STRUCT_END(Ability, 8);
+FLATBUFFERS_STRUCT_END(Ability, 8);
+
+inline bool operator==(const Ability &lhs, const Ability &rhs) {
+  return
+      (lhs.id() == rhs.id()) &&
+      (lhs.distance() == rhs.distance());
+}
 
 }  // namespace Example
 
@@ -360,6 +424,10 @@ struct InParentNamespaceT : public flatbuffers::NativeTable {
   InParentNamespaceT() {
   }
 };
+
+inline bool operator==(const InParentNamespaceT &, const InParentNamespaceT &) {
+  return true;
+}
 
 struct InParentNamespace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef InParentNamespaceT NativeTableType;
@@ -405,6 +473,10 @@ struct MonsterT : public flatbuffers::NativeTable {
   MonsterT() {
   }
 };
+
+inline bool operator==(const MonsterT &, const MonsterT &) {
+  return true;
+}
 
 struct Monster FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MonsterT NativeTableType;
@@ -454,6 +526,11 @@ struct TestSimpleTableWithEnumT : public flatbuffers::NativeTable {
       : color(Color_Green) {
   }
 };
+
+inline bool operator==(const TestSimpleTableWithEnumT &lhs, const TestSimpleTableWithEnumT &rhs) {
+  return
+      (lhs.color == rhs.color);
+}
 
 struct TestSimpleTableWithEnum FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef TestSimpleTableWithEnumT NativeTableType;
@@ -518,6 +595,13 @@ struct StatT : public flatbuffers::NativeTable {
   }
 };
 
+inline bool operator==(const StatT &lhs, const StatT &rhs) {
+  return
+      (lhs.id == rhs.id) &&
+      (lhs.val == rhs.val) &&
+      (lhs.count == rhs.count);
+}
+
 struct Stat FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef StatT NativeTableType;
   static const flatbuffers::TypeTable *MiniReflectTypeTable() {
@@ -549,7 +633,7 @@ struct Stat FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_ID) &&
-           verifier.Verify(id()) &&
+           verifier.VerifyString(id()) &&
            VerifyField<int64_t>(verifier, VT_VAL) &&
            VerifyField<uint16_t>(verifier, VT_COUNT) &&
            verifier.EndTable();
@@ -617,6 +701,11 @@ struct ReferrableT : public flatbuffers::NativeTable {
   }
 };
 
+inline bool operator==(const ReferrableT &lhs, const ReferrableT &rhs) {
+  return
+      (lhs.id == rhs.id);
+}
+
 struct Referrable FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ReferrableT NativeTableType;
   static const flatbuffers::TypeTable *MiniReflectTypeTable() {
@@ -635,14 +724,7 @@ struct Referrable FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return id() < o->id();
   }
   int KeyCompareWithValue(uint64_t val) const {
-    const auto key = id();
-    if (key < val) {
-      return -1;
-    } else if (key > val) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return static_cast<int>(id() > val) - static_cast<int>(id() < val);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -746,6 +828,51 @@ struct MonsterT : public flatbuffers::NativeTable {
         non_owning_reference(nullptr) {
   }
 };
+
+inline bool operator==(const MonsterT &lhs, const MonsterT &rhs) {
+  return
+      (lhs.pos == rhs.pos) &&
+      (lhs.mana == rhs.mana) &&
+      (lhs.hp == rhs.hp) &&
+      (lhs.name == rhs.name) &&
+      (lhs.inventory == rhs.inventory) &&
+      (lhs.color == rhs.color) &&
+      (lhs.test == rhs.test) &&
+      (lhs.test4 == rhs.test4) &&
+      (lhs.testarrayofstring == rhs.testarrayofstring) &&
+      (lhs.testarrayoftables == rhs.testarrayoftables) &&
+      (lhs.enemy == rhs.enemy) &&
+      (lhs.testnestedflatbuffer == rhs.testnestedflatbuffer) &&
+      (lhs.testempty == rhs.testempty) &&
+      (lhs.testbool == rhs.testbool) &&
+      (lhs.testhashs32_fnv1 == rhs.testhashs32_fnv1) &&
+      (lhs.testhashu32_fnv1 == rhs.testhashu32_fnv1) &&
+      (lhs.testhashs64_fnv1 == rhs.testhashs64_fnv1) &&
+      (lhs.testhashu64_fnv1 == rhs.testhashu64_fnv1) &&
+      (lhs.testhashs32_fnv1a == rhs.testhashs32_fnv1a) &&
+      (lhs.testhashu32_fnv1a == rhs.testhashu32_fnv1a) &&
+      (lhs.testhashs64_fnv1a == rhs.testhashs64_fnv1a) &&
+      (lhs.testhashu64_fnv1a == rhs.testhashu64_fnv1a) &&
+      (lhs.testarrayofbools == rhs.testarrayofbools) &&
+      (lhs.testf == rhs.testf) &&
+      (lhs.testf2 == rhs.testf2) &&
+      (lhs.testf3 == rhs.testf3) &&
+      (lhs.testarrayofstring2 == rhs.testarrayofstring2) &&
+      (lhs.testarrayofsortedstruct == rhs.testarrayofsortedstruct) &&
+      (lhs.flex == rhs.flex) &&
+      (lhs.test5 == rhs.test5) &&
+      (lhs.vector_of_longs == rhs.vector_of_longs) &&
+      (lhs.vector_of_doubles == rhs.vector_of_doubles) &&
+      (lhs.parent_namespace_test == rhs.parent_namespace_test) &&
+      (lhs.vector_of_referrables == rhs.vector_of_referrables) &&
+      (lhs.single_weak_reference == rhs.single_weak_reference) &&
+      (lhs.vector_of_weak_references == rhs.vector_of_weak_references) &&
+      (lhs.vector_of_strong_referrables == rhs.vector_of_strong_referrables) &&
+      (lhs.co_owning_reference == rhs.co_owning_reference) &&
+      (lhs.vector_of_co_owning_references == rhs.vector_of_co_owning_references) &&
+      (lhs.non_owning_reference == rhs.non_owning_reference) &&
+      (lhs.vector_of_non_owning_references == rhs.vector_of_non_owning_references);
+}
 
 /// an example documentation comment: monster object
 struct Monster FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -999,8 +1126,7 @@ struct Monster FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_FLEX);
   }
   flexbuffers::Reference flex_flexbuffer_root() const {
-    auto v = flex();
-    return flexbuffers::GetRoot(v->Data(), v->size());
+    return flexbuffers::GetRoot(flex()->Data(), flex()->size());
   }
   const flatbuffers::Vector<const Test *> *test5() const {
     return GetPointer<const flatbuffers::Vector<const Test *> *>(VT_TEST5);
@@ -1080,25 +1206,25 @@ struct Monster FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<int16_t>(verifier, VT_MANA) &&
            VerifyField<int16_t>(verifier, VT_HP) &&
            VerifyOffsetRequired(verifier, VT_NAME) &&
-           verifier.Verify(name()) &&
+           verifier.VerifyString(name()) &&
            VerifyOffset(verifier, VT_INVENTORY) &&
-           verifier.Verify(inventory()) &&
+           verifier.VerifyVector(inventory()) &&
            VerifyField<int8_t>(verifier, VT_COLOR) &&
            VerifyField<uint8_t>(verifier, VT_TEST_TYPE) &&
            VerifyOffset(verifier, VT_TEST) &&
            VerifyAny(verifier, test(), test_type()) &&
            VerifyOffset(verifier, VT_TEST4) &&
-           verifier.Verify(test4()) &&
+           verifier.VerifyVector(test4()) &&
            VerifyOffset(verifier, VT_TESTARRAYOFSTRING) &&
-           verifier.Verify(testarrayofstring()) &&
+           verifier.VerifyVector(testarrayofstring()) &&
            verifier.VerifyVectorOfStrings(testarrayofstring()) &&
            VerifyOffset(verifier, VT_TESTARRAYOFTABLES) &&
-           verifier.Verify(testarrayoftables()) &&
+           verifier.VerifyVector(testarrayoftables()) &&
            verifier.VerifyVectorOfTables(testarrayoftables()) &&
            VerifyOffset(verifier, VT_ENEMY) &&
            verifier.VerifyTable(enemy()) &&
            VerifyOffset(verifier, VT_TESTNESTEDFLATBUFFER) &&
-           verifier.Verify(testnestedflatbuffer()) &&
+           verifier.VerifyVector(testnestedflatbuffer()) &&
            VerifyOffset(verifier, VT_TESTEMPTY) &&
            verifier.VerifyTable(testempty()) &&
            VerifyField<uint8_t>(verifier, VT_TESTBOOL) &&
@@ -1111,40 +1237,40 @@ struct Monster FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<int64_t>(verifier, VT_TESTHASHS64_FNV1A) &&
            VerifyField<uint64_t>(verifier, VT_TESTHASHU64_FNV1A) &&
            VerifyOffset(verifier, VT_TESTARRAYOFBOOLS) &&
-           verifier.Verify(testarrayofbools()) &&
+           verifier.VerifyVector(testarrayofbools()) &&
            VerifyField<float>(verifier, VT_TESTF) &&
            VerifyField<float>(verifier, VT_TESTF2) &&
            VerifyField<float>(verifier, VT_TESTF3) &&
            VerifyOffset(verifier, VT_TESTARRAYOFSTRING2) &&
-           verifier.Verify(testarrayofstring2()) &&
+           verifier.VerifyVector(testarrayofstring2()) &&
            verifier.VerifyVectorOfStrings(testarrayofstring2()) &&
            VerifyOffset(verifier, VT_TESTARRAYOFSORTEDSTRUCT) &&
-           verifier.Verify(testarrayofsortedstruct()) &&
+           verifier.VerifyVector(testarrayofsortedstruct()) &&
            VerifyOffset(verifier, VT_FLEX) &&
-           verifier.Verify(flex()) &&
+           verifier.VerifyVector(flex()) &&
            VerifyOffset(verifier, VT_TEST5) &&
-           verifier.Verify(test5()) &&
+           verifier.VerifyVector(test5()) &&
            VerifyOffset(verifier, VT_VECTOR_OF_LONGS) &&
-           verifier.Verify(vector_of_longs()) &&
+           verifier.VerifyVector(vector_of_longs()) &&
            VerifyOffset(verifier, VT_VECTOR_OF_DOUBLES) &&
-           verifier.Verify(vector_of_doubles()) &&
+           verifier.VerifyVector(vector_of_doubles()) &&
            VerifyOffset(verifier, VT_PARENT_NAMESPACE_TEST) &&
            verifier.VerifyTable(parent_namespace_test()) &&
            VerifyOffset(verifier, VT_VECTOR_OF_REFERRABLES) &&
-           verifier.Verify(vector_of_referrables()) &&
+           verifier.VerifyVector(vector_of_referrables()) &&
            verifier.VerifyVectorOfTables(vector_of_referrables()) &&
            VerifyField<uint64_t>(verifier, VT_SINGLE_WEAK_REFERENCE) &&
            VerifyOffset(verifier, VT_VECTOR_OF_WEAK_REFERENCES) &&
-           verifier.Verify(vector_of_weak_references()) &&
+           verifier.VerifyVector(vector_of_weak_references()) &&
            VerifyOffset(verifier, VT_VECTOR_OF_STRONG_REFERRABLES) &&
-           verifier.Verify(vector_of_strong_referrables()) &&
+           verifier.VerifyVector(vector_of_strong_referrables()) &&
            verifier.VerifyVectorOfTables(vector_of_strong_referrables()) &&
            VerifyField<uint64_t>(verifier, VT_CO_OWNING_REFERENCE) &&
            VerifyOffset(verifier, VT_VECTOR_OF_CO_OWNING_REFERENCES) &&
-           verifier.Verify(vector_of_co_owning_references()) &&
+           verifier.VerifyVector(vector_of_co_owning_references()) &&
            VerifyField<uint64_t>(verifier, VT_NON_OWNING_REFERENCE) &&
            VerifyOffset(verifier, VT_VECTOR_OF_NON_OWNING_REFERENCES) &&
-           verifier.Verify(vector_of_non_owning_references()) &&
+           verifier.VerifyVector(vector_of_non_owning_references()) &&
            verifier.EndTable();
   }
   MonsterT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -1516,6 +1642,22 @@ struct TypeAliasesT : public flatbuffers::NativeTable {
   }
 };
 
+inline bool operator==(const TypeAliasesT &lhs, const TypeAliasesT &rhs) {
+  return
+      (lhs.i8 == rhs.i8) &&
+      (lhs.u8 == rhs.u8) &&
+      (lhs.i16 == rhs.i16) &&
+      (lhs.u16 == rhs.u16) &&
+      (lhs.i32 == rhs.i32) &&
+      (lhs.u32 == rhs.u32) &&
+      (lhs.i64 == rhs.i64) &&
+      (lhs.u64 == rhs.u64) &&
+      (lhs.f32 == rhs.f32) &&
+      (lhs.f64 == rhs.f64) &&
+      (lhs.v8 == rhs.v8) &&
+      (lhs.vf64 == rhs.vf64);
+}
+
 struct TypeAliases FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef TypeAliasesT NativeTableType;
   static const flatbuffers::TypeTable *MiniReflectTypeTable() {
@@ -1620,9 +1762,9 @@ struct TypeAliases FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<float>(verifier, VT_F32) &&
            VerifyField<double>(verifier, VT_F64) &&
            VerifyOffset(verifier, VT_V8) &&
-           verifier.Verify(v8()) &&
+           verifier.VerifyVector(v8()) &&
            VerifyOffset(verifier, VT_VF64) &&
-           verifier.Verify(vf64()) &&
+           verifier.VerifyVector(vf64()) &&
            verifier.EndTable();
   }
   TypeAliasesT *UnPack(const flatbuffers::resolver_function_t *_resolver = nullptr) const;
@@ -2168,7 +2310,7 @@ inline flatbuffers::Offset<void> AnyUnion::Pack(flatbuffers::FlatBufferBuilder &
 inline AnyUnion::AnyUnion(const AnyUnion &u) FLATBUFFERS_NOEXCEPT : type(u.type), value(nullptr) {
   switch (type) {
     case Any_Monster: {
-      assert(false);  // MonsterT not copyable.
+      FLATBUFFERS_ASSERT(false);  // MonsterT not copyable.
       break;
     }
     case Any_TestSimpleTableWithEnum: {

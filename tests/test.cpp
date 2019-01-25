@@ -33,6 +33,7 @@
 #include "namespace_test/namespace_test1_generated.h"
 #include "namespace_test/namespace_test2_generated.h"
 #include "union_vector/union_vector_generated.h"
+#include "test_assert.h"
 
 // clang-format off
 #ifndef FLATBUFFERS_CPP98_STL
@@ -43,44 +44,7 @@
 
 using namespace MyGame::Example;
 
-#ifdef __ANDROID__
-  #include <android/log.h>
-  #define TEST_OUTPUT_LINE(...) \
-    __android_log_print(ANDROID_LOG_INFO, "FlatBuffers", __VA_ARGS__)
-  #define FLATBUFFERS_NO_FILE_TESTS
-#else
-  #define TEST_OUTPUT_LINE(...) \
-    { printf(__VA_ARGS__); printf("\n"); }
-#endif
-// clang-format on
-
-int testing_fails = 0;
-
-void TestFail(const char *expval, const char *val, const char *exp,
-              const char *file, int line) {
-  TEST_OUTPUT_LINE("VALUE: \"%s\"", expval);
-  TEST_OUTPUT_LINE("EXPECTED: \"%s\"", val);
-  TEST_OUTPUT_LINE("TEST FAILED: %s:%d, %s", file, line, exp);
-  assert(0);
-  testing_fails++;
-}
-
-void TestEqStr(const char *expval, const char *val, const char *exp,
-               const char *file, int line) {
-  if (strcmp(expval, val) != 0) { TestFail(expval, val, exp, file, line); }
-}
-
-template<typename T, typename U>
-void TestEq(T expval, U val, const char *exp, const char *file, int line) {
-  if (U(expval) != val) {
-    TestFail(flatbuffers::NumToString(expval).c_str(),
-             flatbuffers::NumToString(val).c_str(), exp, file, line);
-  }
-}
-
-#define TEST_EQ(exp, val) TestEq(exp, val, #exp, __FILE__, __LINE__)
-#define TEST_NOTNULL(exp) TestEq(exp == NULL, false, #exp, __FILE__, __LINE__)
-#define TEST_EQ_STR(exp, val) TestEqStr(exp, val, #exp, __FILE__, __LINE__)
+void FlatBufferBuilderTest();
 
 // Include simple random number generator to ensure results will be the
 // same cross platform.
@@ -273,8 +237,13 @@ void AccessFlatBufferTest(const uint8_t *flatbuf, size_t length,
   TEST_EQ(VectorLength(inventory), 10UL);  // Works even if inventory is null.
   TEST_NOTNULL(inventory);
   unsigned char inv_data[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-  for (auto it = inventory->begin(); it != inventory->end(); ++it)
-    TEST_EQ(*it, inv_data[it - inventory->begin()]);
+  // Check compatibilty of iterators with STL.
+  std::vector<unsigned char> inv_vec(inventory->begin(), inventory->end());
+  for (auto it = inventory->begin(); it != inventory->end(); ++it) {
+    auto indx = it - inventory->begin();
+    TEST_EQ(*it, inv_vec.at(indx));  // Use bounds-check.
+    TEST_EQ(*it, inv_data[indx]);
+  }
 
   TEST_EQ(monster->color(), Color_Blue);
 
@@ -645,6 +614,22 @@ void ParseAndGenerateTextTest() {
   // If this fails, check registry.lasterror_.
   TEST_EQ(ok, true);
   TEST_EQ_STR(text.c_str(), jsonfile.c_str());
+
+  // Generate text for UTF-8 strings without escapes.
+  std::string jsonfile_utf8;
+  TEST_EQ(flatbuffers::LoadFile((test_data_path + "unicode_test.json").c_str(),
+                                false, &jsonfile_utf8),
+          true);
+  TEST_EQ(parser.Parse(jsonfile_utf8.c_str(), include_directories), true);
+  // To ensure it is correct, generate utf-8 text back from the binary.
+  std::string jsongen_utf8;
+  // request natural printing for utf-8 strings
+  parser.opts.natural_utf8 = true;
+  parser.opts.strict_json = true;
+  TEST_EQ(
+      GenerateText(parser, parser.builder_.GetBufferPointer(), &jsongen_utf8),
+      true);
+  TEST_EQ_STR(jsongen_utf8.c_str(), jsonfile_utf8.c_str());
 }
 
 void ReflectionTest(uint8_t *flatbuf, size_t length) {
@@ -1706,6 +1691,38 @@ void UnionVectorTest() {
       "characters_type: [ Belle, MuLan, BookFan, Other, Unused ], "
       "characters: [ { books_read: 7 }, { sword_attack_damage: 5 }, "
       "{ books_read: 2 }, \"Other\", \"Unused\" ] }");
+
+
+  flatbuffers::ToStringVisitor visitor("\n", true, "  ");
+  IterateFlatBuffer(fbb.GetBufferPointer(), MovieTypeTable(), &visitor);
+  TEST_EQ_STR(
+      visitor.s.c_str(),
+      "{\n"
+      "  \"main_character_type\": \"Rapunzel\",\n"
+      "  \"main_character\": {\n"
+      "    \"hair_length\": 6\n"
+      "  },\n"
+      "  \"characters_type\": [\n"
+      "    \"Belle\",\n"
+      "    \"MuLan\",\n"
+      "    \"BookFan\",\n"
+      "    \"Other\",\n"
+      "    \"Unused\"\n"
+      "  ],\n"
+      "  \"characters\": [\n"
+      "    {\n"
+      "      \"books_read\": 7\n"
+      "    },\n"
+      "    {\n"
+      "      \"sword_attack_damage\": 5\n"
+      "    },\n"
+      "    {\n"
+      "      \"books_read\": 2\n"
+      "    },\n"
+      "    \"Other\",\n"
+      "    \"Unused\"\n"
+      "  ]\n"
+      "}");
 }
 
 void ConformTest() {
@@ -1842,7 +1859,7 @@ void FlexBuffersTest() {
   TEST_EQ(tvec3[2].AsInt8(), 3);
   TEST_EQ(map["bool"].AsBool(), true);
   auto tvecb = map["bools"].AsTypedVector();
-  TEST_EQ(tvecb.ElementType(), flexbuffers::TYPE_BOOL);
+  TEST_EQ(tvecb.ElementType(), flexbuffers::FBT_BOOL);
   TEST_EQ(map["foo"].AsUInt8(), 100);
   TEST_EQ(map["unknown"].IsNull(), true);
   auto mymap = map["mymap"].AsMap();
@@ -1929,7 +1946,66 @@ void EndianSwapTest() {
   TEST_EQ(flatbuffers::EndianSwap(flatbuffers::EndianSwap(3.14f)), 3.14f);
 }
 
-int main(int /*argc*/, const char * /*argv*/ []) {
+void UninitializedVectorTest() {
+  flatbuffers::FlatBufferBuilder builder;
+
+  Test *buf = nullptr;
+  auto vector_offset = builder.CreateUninitializedVectorOfStructs<Test>(2, &buf);
+  TEST_NOTNULL(buf);
+  buf[0] = Test(10, 20);
+  buf[1] = Test(30, 40);
+
+  auto required_name = builder.CreateString("myMonster");
+  auto monster_builder = MonsterBuilder(builder);
+  monster_builder.add_name(required_name); // required field mandated for monster.
+  monster_builder.add_test4(vector_offset);
+  builder.Finish(monster_builder.Finish());
+
+  auto p = builder.GetBufferPointer();
+  auto uvt = flatbuffers::GetRoot<Monster>(p);
+  TEST_NOTNULL(uvt);
+  auto vec = uvt->test4();
+  TEST_NOTNULL(vec);
+  auto test_0 = vec->Get(0);
+  auto test_1 = vec->Get(1);
+  TEST_EQ(test_0->a(), 10);
+  TEST_EQ(test_0->b(), 20);
+  TEST_EQ(test_1->a(), 30);
+  TEST_EQ(test_1->b(), 40);
+}
+
+void EqualOperatorTest() {
+  MonsterT a;
+  MonsterT b;
+  TEST_EQ(b == a, true);
+
+  b.mana = 33;
+  TEST_EQ(b == a, false);
+  b.mana = 150;
+  TEST_EQ(b == a, true);
+
+  b.inventory.push_back(3);
+  TEST_EQ(b == a, false);
+  b.inventory.clear();
+  TEST_EQ(b == a, true);
+
+  b.test.type = Any_Monster;
+  TEST_EQ(b == a, false);
+}
+
+// For testing any binaries, e.g. from fuzzing.
+void LoadVerifyBinaryTest() {
+  std::string binary;
+  if (flatbuffers::LoadFile((test_data_path +
+                             "fuzzer/your-filename-here").c_str(),
+                            true, &binary)) {
+    flatbuffers::Verifier verifier(
+          reinterpret_cast<const uint8_t *>(binary.data()), binary.size());
+    TEST_EQ(VerifyMonsterBuffer(verifier), true);
+  }
+}
+
+int FlatBufferTests() {
   // clang-format off
   #if defined(FLATBUFFERS_MEMORY_LEAK_TRACKING) && \
       defined(_MSC_VER) && defined(_DEBUG)
@@ -1972,6 +2048,7 @@ int main(int /*argc*/, const char * /*argv*/ []) {
     ReflectionTest(flatbuf.data(), flatbuf.size());
     ParseProtoTest();
     UnionVectorTest();
+    LoadVerifyBinaryTest();
   #endif
   // clang-format on
 
@@ -1999,6 +2076,17 @@ int main(int /*argc*/, const char * /*argv*/ []) {
   JsonDefaultTest();
 
   FlexBuffersTest();
+  UninitializedVectorTest();
+  EqualOperatorTest();
+
+  return 0;
+}
+
+int main(int /*argc*/, const char * /*argv*/ []) {
+  InitTestEngine();
+
+  FlatBufferTests();
+  FlatBufferBuilderTest();
 
   if (!testing_fails) {
     TEST_OUTPUT_LINE("ALL TESTS PASSED");

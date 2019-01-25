@@ -16,6 +16,11 @@ struct BookReader;
 struct Movie;
 struct MovieT;
 
+bool operator==(const AttackerT &lhs, const AttackerT &rhs);
+bool operator==(const Rapunzel &lhs, const Rapunzel &rhs);
+bool operator==(const BookReader &lhs, const BookReader &rhs);
+bool operator==(const MovieT &lhs, const MovieT &rhs);
+
 inline const flatbuffers::TypeTable *AttackerTypeTable();
 
 inline const flatbuffers::TypeTable *RapunzelTypeTable();
@@ -138,10 +143,46 @@ struct CharacterUnion {
   }
 };
 
+
+inline bool operator==(const CharacterUnion &lhs, const CharacterUnion &rhs) {
+  if (lhs.type != rhs.type) return false;
+  switch (lhs.type) {
+    case Character_NONE: {
+      return true;
+    }
+    case Character_MuLan: {
+      return *(reinterpret_cast<const AttackerT *>(lhs.value)) ==
+             *(reinterpret_cast<const AttackerT *>(rhs.value));
+    }
+    case Character_Rapunzel: {
+      return *(reinterpret_cast<const Rapunzel *>(lhs.value)) ==
+             *(reinterpret_cast<const Rapunzel *>(rhs.value));
+    }
+    case Character_Belle: {
+      return *(reinterpret_cast<const BookReader *>(lhs.value)) ==
+             *(reinterpret_cast<const BookReader *>(rhs.value));
+    }
+    case Character_BookFan: {
+      return *(reinterpret_cast<const BookReader *>(lhs.value)) ==
+             *(reinterpret_cast<const BookReader *>(rhs.value));
+    }
+    case Character_Other: {
+      return *(reinterpret_cast<const std::string *>(lhs.value)) ==
+             *(reinterpret_cast<const std::string *>(rhs.value));
+    }
+    case Character_Unused: {
+      return *(reinterpret_cast<const std::string *>(lhs.value)) ==
+             *(reinterpret_cast<const std::string *>(rhs.value));
+    }
+    default: {
+      return false;
+    }
+  }
+}
 bool VerifyCharacter(flatbuffers::Verifier &verifier, const void *obj, Character type);
 bool VerifyCharacterVector(flatbuffers::Verifier &verifier, const flatbuffers::Vector<flatbuffers::Offset<void>> *values, const flatbuffers::Vector<uint8_t> *types);
 
-MANUALLY_ALIGNED_STRUCT(4) Rapunzel FLATBUFFERS_FINAL_CLASS {
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Rapunzel FLATBUFFERS_FINAL_CLASS {
  private:
   int32_t hair_length_;
 
@@ -159,9 +200,14 @@ MANUALLY_ALIGNED_STRUCT(4) Rapunzel FLATBUFFERS_FINAL_CLASS {
     flatbuffers::WriteScalar(&hair_length_, _hair_length);
   }
 };
-STRUCT_END(Rapunzel, 4);
+FLATBUFFERS_STRUCT_END(Rapunzel, 4);
 
-MANUALLY_ALIGNED_STRUCT(4) BookReader FLATBUFFERS_FINAL_CLASS {
+inline bool operator==(const Rapunzel &lhs, const Rapunzel &rhs) {
+  return
+      (lhs.hair_length() == rhs.hair_length());
+}
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) BookReader FLATBUFFERS_FINAL_CLASS {
  private:
   int32_t books_read_;
 
@@ -179,7 +225,12 @@ MANUALLY_ALIGNED_STRUCT(4) BookReader FLATBUFFERS_FINAL_CLASS {
     flatbuffers::WriteScalar(&books_read_, _books_read);
   }
 };
-STRUCT_END(BookReader, 4);
+FLATBUFFERS_STRUCT_END(BookReader, 4);
+
+inline bool operator==(const BookReader &lhs, const BookReader &rhs) {
+  return
+      (lhs.books_read() == rhs.books_read());
+}
 
 struct AttackerT : public flatbuffers::NativeTable {
   typedef Attacker TableType;
@@ -188,6 +239,11 @@ struct AttackerT : public flatbuffers::NativeTable {
       : sword_attack_damage(0) {
   }
 };
+
+inline bool operator==(const AttackerT &lhs, const AttackerT &rhs) {
+  return
+      (lhs.sword_attack_damage == rhs.sword_attack_damage);
+}
 
 struct Attacker FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef AttackerT NativeTableType;
@@ -249,6 +305,12 @@ struct MovieT : public flatbuffers::NativeTable {
   }
 };
 
+inline bool operator==(const MovieT &lhs, const MovieT &rhs) {
+  return
+      (lhs.main_character == rhs.main_character) &&
+      (lhs.characters == rhs.characters);
+}
+
 struct Movie FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MovieT NativeTableType;
   static const flatbuffers::TypeTable *MiniReflectTypeTable() {
@@ -309,9 +371,9 @@ struct Movie FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_MAIN_CHARACTER) &&
            VerifyCharacter(verifier, main_character(), main_character_type()) &&
            VerifyOffset(verifier, VT_CHARACTERS_TYPE) &&
-           verifier.Verify(characters_type()) &&
+           verifier.VerifyVector(characters_type()) &&
            VerifyOffset(verifier, VT_CHARACTERS) &&
-           verifier.Verify(characters()) &&
+           verifier.VerifyVector(characters()) &&
            VerifyCharacterVector(verifier, characters(), characters_type()) &&
            verifier.EndTable();
   }
@@ -458,11 +520,11 @@ inline bool VerifyCharacter(flatbuffers::Verifier &verifier, const void *obj, Ch
     }
     case Character_Other: {
       auto ptr = reinterpret_cast<const flatbuffers::String *>(obj);
-      return verifier.Verify(ptr);
+      return verifier.VerifyString(ptr);
     }
     case Character_Unused: {
       auto ptr = reinterpret_cast<const flatbuffers::String *>(obj);
-      return verifier.Verify(ptr);
+      return verifier.VerifyString(ptr);
     }
     default: return false;
   }

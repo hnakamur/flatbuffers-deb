@@ -702,7 +702,7 @@ class PhpGenerator : public BaseGenerator {
           break;
         }
         case BASE_TYPE_UNION: GetUnionField(field, code_ptr); break;
-        default: assert(0);
+        default: FLATBUFFERS_ASSERT(0);
       }
     }
     if (field.value.type.base_type == BASE_TYPE_VECTOR) {
@@ -864,7 +864,7 @@ class PhpGenerator : public BaseGenerator {
     static const char *ctypename[] = {
     // clang-format off
         #define FLATBUFFERS_TD(ENUM, IDLTYPE, \
-            CTYPE, JTYPE, GTYPE, NTYPE, PTYPE) \
+            CTYPE, JTYPE, GTYPE, NTYPE, PTYPE, RTYPE) \
             #NTYPE,
                 FLATBUFFERS_GEN_TYPES(FLATBUFFERS_TD)
         #undef FLATBUFFERS_TD

@@ -12,8 +12,11 @@
 *.vcxproj.user
 *.sln
 *.suo
+*.opendb
 *.keystore
+**/.vs/**
 **/bin/**
+!tests/rust_usage_test/bin/**
 **/gen/**
 **/libs/**
 **/obj/**
@@ -25,6 +28,8 @@
 **/CMakeTestfile.cmake
 **/Debug/**
 **/Release/**
+**/RelWithDebInfo/**
+**/x64/ #build artifacts from VS
 build.xml
 local.properties
 project.properties
@@ -45,11 +50,14 @@ grpctest
 grpctest.exe
 snapshot.sh
 tags
+tests/dart_gen
 tests/go_gen
 tests/monsterdata_java_wire.mon
 tests/monsterdata_java_wire_sp.mon
 tests/monsterdata_go_wire.mon
 tests/monsterdata_javascript_wire.mon
+tests/monsterdata_lobster_wire.mon
+tests/monsterdata_rust_wire.mon
 tests/unicode_test.mon
 tests/ts/
 tests/php/
@@ -93,3 +101,11 @@ js/flatbuffers.mjs
 .ninja_log
 build.ninja
 rules.ninja
+.vscode
+dart/.pub/
+dart/.packages
+dart/pubspec.lock
+dart/.dart_tool/
+dart/build/
+dart/doc/api/
+Cargo.lock
