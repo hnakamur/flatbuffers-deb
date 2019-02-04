@@ -36,7 +36,7 @@ Files: tests/fuzzer/flatbuffers_parser_fuzzer.cc
 Copyright: 2015, The Chromium Authors
 License: BSD-3-clause
 Comment:
- The verbatim text for the license assigment used is:
+ The verbatim text for the license assignment used is:
  """
  Use of this source code is governed by a BSD-style license that can be
  found in the LICENSE file.
