@@ -3,6 +3,8 @@
 # SOURCE_DATE_EPOCH set by dh
 export DEB_CPPFLAGS_MAINT_APPEND = -Wno-error=date-time
 
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
 %:
 	dh $@
 
