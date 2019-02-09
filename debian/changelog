@@ -1,3 +1,9 @@
+flatbuffers (1.10.0-1ubuntu1ppa2~ubuntu18.04.1) bionic; urgency=medium
+
+  * Change section libflatbuffers-dev to devel
+
+ -- Hiroaki Nakamura <hnakamur@gmail.com>  Sat, 09 Feb 2019 23:37:52 +0900
+
 flatbuffers (1.10.0-1ubuntu1ppa1~ubuntu18.04.1) bionic; urgency=medium
 
   * Backport to Ubuntu 18.04 LTS 
