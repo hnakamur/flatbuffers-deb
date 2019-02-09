@@ -43,7 +43,7 @@ Description: efficient cross platform serialization library
  flatbuffer-compiler in a cross compiling environment.
 
 Package: libflatbuffers-dev
-Section: libsdevel
+Section: devel
 Architecture: any
 Multi-Arch: same
 Depends:
