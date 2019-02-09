@@ -3,7 +3,7 @@ Section: devel
 Priority: optional
 Maintainer: Maximiliano Curia <maxy@debian.org>
 Uploaders: Nobuhiro Iwamatsu <iwamatsu@debian.org>,
-Build-Depends: cmake (>= 2.8), debhelper (>= 12)
+Build-Depends: cmake (>= 2.8), debhelper (>= 11)
 Standards-Version: 4.3.0
 Homepage: http://google.github.io/flatbuffers/
 Vcs-Browser: https://salsa.debian.org/debian/flatbuffers
