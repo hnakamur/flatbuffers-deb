@@ -1,0 +1,4 @@
+* Ship other language bindings
+* Re-generate generated files in test/ - since they are not used in
+   the binary packages it is ok to have them in the source package for now.
+* Ship more documentation files

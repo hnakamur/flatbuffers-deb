@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+
+# SOURCE_DATE_EPOCH set by dh
+export DEB_CPPFLAGS_MAINT_APPEND = -Wno-error=date-time
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@ --with pkgkde_symbolshelper
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DFLATBUFFERS_BUILD_SHAREDLIB=ON

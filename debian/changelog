@@ -1,0 +1,47 @@
+flatbuffers (1.11.0+dfsg1-1.1ubuntu1) focal; urgency=medium
+
+  * Refresh symbols to fix FTBFS on ppc64el and s390x
+
+ -- Balint Reczey <rbalint@ubuntu.com>  Tue, 18 Feb 2020 12:38:43 +0100
+
+flatbuffers (1.11.0+dfsg1-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload
+  * Fix odd version number that I uploaded with accidentally (I'm sorry)
+
+ -- Balint Reczey <rbalint@ubuntu.com>  Mon, 20 Jan 2020 12:14:42 +0100
+
+flatbuffers (1.11.0+dfsg1-1.1~rbalint1) unstable; urgency=medium
+
+  * Non-maintainer upload (Closes: #949329)
+  * Update symbols from sid build logs and local build to fix FTBFS
+
+ -- Balint Reczey <rbalint@ubuntu.com>  Sun, 19 Jan 2020 22:22:01 +0100
+
+flatbuffers (1.11.0+dfsg1-1) unstable; urgency=medium
+
+  [ Maximiliano Curia ]
+  * Initial release. (Closes: #823037)
+  * New upstream release (1.10.0).
+  * Bump debhelper build-dep and compat to 12
+  * Bump to Standards-Version 4.3.0
+  * Use the hardening=+all deb build option
+  * Add missing package sections
+  * Add symbols to be managed with pkgkde symbolshelper
+  * New upstream release (1.11.0).
+  * Update symbols files
+  * Release to unstable
+
+  [ Balint Reczey ]
+  * Add Salsa CI configuration
+  * debian/control: Fix typo libsdevel -> libdevel
+  * debian/control: Make unique short descriptions
+  * Override false positive source-contains-prebuilt-doxygen-documentation
+    Lintian warning
+  * Add packaging TODO
+  * Exclude prebuilt jars from original upstream tarball
+  * debian/watch: Support repacked source
+  * New import of upstream version 1.10.0 as 1.10.0+dfsg1 excluding the jars
+  * debian/gitlab-ci.yml: Disable reprotest until cmake is fixed
+
+ -- Maximiliano Curia <maxy@debian.org>  Tue, 30 Jul 2019 10:40:36 -0300
