@@ -1,3 +1,9 @@
+flatbuffers (1.11.0+dfsg1-1.1ubuntu1ppa1~bionic) bionic; urgency=medium
+
+  * Backport to Ubuntu 18.04 LTS.
+
+ -- Hiroaki Nakamura <hnakamur@gmail.com>  Tue, 03 Mar 2020 00:00:21 +0900
+
 flatbuffers (1.11.0+dfsg1-1.1ubuntu1) focal; urgency=medium
 
   * Refresh symbols to fix FTBFS on ppc64el and s390x
